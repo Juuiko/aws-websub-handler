@@ -5,21 +5,23 @@ import xml.etree.ElementTree as ET
 def lambda_handler(event, context):
     if event['requestContext']['http']['method'] == 'GET':
         challenge = event['queryStringParameters']['hub.challenge']
-        print(event)
         return challenge
-    else:
+    else:                           #if POST
         body = event['body']
-        root = ET.fromstring(body)
-        if root[2].text == "YouTube video feed":
-            username = root[4][5][0].text
-            videoURL = "https://youtu.be/" + root[4][1].text
-            content = username + " just uploaded a new video!\n" + videoURL
-            url = 'https://discordapp.com/api/webhooks/694272177909792768/ab_xjeEZ8Zf5V7_7l7Y3OL6UH6b3a6NdWKFVFLfLcmNqueMQrncF_jJsKh1EkjyEhJ8p'
-            data = {
-                'username': "Quantex Bot",
-                'content': content
-            }
-            requests.post(url, json.dumps(data), headers={"Content-Type": "application/json"})
+        if body[0] == "<":          #if youtube xml
+            body = body.replace("\\","")
+            xml = ET.fromstring(body)
+
+            if list(xml[0].attrib)[0] == "rel":
+                videoURL = "https://youtu.be/" + xml[4][1].text
+                username = xml[4][5][0].text
+                content = "[" + username + " just uploaded a new video!](" + videoURL + ")"
+                url = 'https://discordapp.com/api/webhooks/691028975803170858/yIT3IOLjqdGzUXZ28TOwzc5Aew5Rb8H6X2kzsZhHQ7-5rgaer_FP36o6_3N5ElyGK-rD'
+                data = {
+                    'username': "Youtube",
+                    'content': content
+                }
+                requests.post(url, json.dumps(data), headers={"Content-Type": "application/json"})
         else:
-            print(root[2].text)
-        return "ACK"
+            print("Twitch!")
+        return
