@@ -1,3 +1,4 @@
+import os
 import json
 import requests
 import xml.etree.ElementTree as ET
@@ -6,9 +7,9 @@ def lambda_handler(event, context):
     if event['requestContext']['http']['method'] == 'GET':
         challenge = event['queryStringParameters']['hub.challenge']
         return challenge
-    else:                           #if POST
+    else:
         body = event['body']
-        if body[0] == "<":          #if youtube xml
+        if event['requestContext']['http']['path'] == '/default/webhook-generator':
             body = body.replace("\\","")
             xml = ET.fromstring(body)
 
@@ -16,12 +17,20 @@ def lambda_handler(event, context):
                 videoURL = "https://youtu.be/" + xml[4][1].text
                 username = xml[4][5][0].text
                 content = "[" + username + " just uploaded a new video!](" + videoURL + ")"
-                url = 'https://discordapp.com/api/webhooks/691028975803170858/yIT3IOLjqdGzUXZ28TOwzc5Aew5Rb8H6X2kzsZhHQ7-5rgaer_FP36o6_3N5ElyGK-rD'
                 data = {
                     'username': "Youtube",
                     'content': content
                 }
-                requests.post(url, json.dumps(data), headers={"Content-Type": "application/json"})
+                requests.post(*WEBHOOK_URL*, json.dumps(data), headers={"Content-Type": "application/json"})
         else:
-            print("Twitch!")
-        return
+            channel = event['body']['data'][0]
+            channelLink = "https://www.twitch.tv/" + channel['user_name']
+            gameTitleURL = "https://api.twitch.tv/helix/games?id=" + channel['game_id']
+            gameTitle = requests.get(gameTitleURL, headers = {'Client-ID': *TWITCH_CLIENTID})
+            text = channel['user_name'] + " is streaming " + gameTitle.json()['data'][0]['name'] + "!\n" + channel['title'] + "\n" + channelLink
+            data = {
+                'username': "Twitch",
+                'content': text
+            }
+            requests.post(*WEBHOOK_URL*, json.dumps(data), headers={"Content-Type": "application/json"})
+    return
