@@ -1,4 +1,3 @@
-import os
 import json
 import requests
 import xml.etree.ElementTree as ET
@@ -22,15 +21,15 @@ def lambda_handler(event, context):
                     'content': content
                 }
                 requests.post(*WEBHOOK_URL*, json.dumps(data), headers={"Content-Type": "application/json"})
-        else:
-            channel = event['body']['data'][0]
-            channelLink = "https://www.twitch.tv/" + channel['user_name']
-            gameTitleURL = "https://api.twitch.tv/helix/games?id=" + channel['game_id']
-            gameTitle = requests.get(gameTitleURL, headers = {'Client-ID': *TWITCH_CLIENTID})
-            text = channel['user_name'] + " is streaming " + gameTitle.json()['data'][0]['name'] + "!\n" + channel['title'] + "\n" + channelLink
-            data = {
-                'username': "Twitch",
-                'content': text
-            }
+        tData = json.loads(body)
+            if len(tData['data'])>0:
+                channel = tData['data'][0]
+                channelLink = "https://www.twitch.tv/" + channel['user_name']
+                gameTitleURL = "https://api.twitch.tv/helix/games?id=" + channel['game_id']
+                gameTitle = requests.get(gameTitleURL, headers = {'Client-ID': 'quk4bsuua611lzukiwsxc9bx0ccuj4'})
+                text = channel['user_name'] + " is streaming " + gameTitle.json()['data'][0]['name'] + "!\n" + channel['title'] + "\n" + channelLink
+                data = {
+                    'username': "Twitch",
+                    'content': text
+                }
             requests.post(*WEBHOOK_URL*, json.dumps(data), headers={"Content-Type": "application/json"})
-    return
